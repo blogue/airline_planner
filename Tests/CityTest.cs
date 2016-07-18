@@ -8,6 +8,9 @@ namespace AirlinePlanner
 {
   public class CityTest : IDisposable
   {
+    private DateTime? departureTime = new DateTime(2016, 7, 18, 6, 0, 0);
+    private DateTime? arrivalTime = new DateTime(2016, 7, 18, 10, 0, 0);
+
     public CityTest()
     {
       DBConfiguration.ConnectionString = "Data Source=(localdb)\\mssqllocaldb;Initial Catalog=airline_planner_test;Integrated Security=SSPI;";
@@ -16,6 +19,7 @@ namespace AirlinePlanner
     public void Dispose()
     {
       City.DeleteAll();
+      Flight.DeleteAll();
     }
 
     [Fact]
@@ -104,7 +108,35 @@ namespace AirlinePlanner
 
       //Assert
       Assert.Equal(testCityList, resultCategories);
+    }
 
+    [Fact]
+    public void Test_GetDeparturesArrivals_GetsDeparturesorArrivalsFromCity()
+    {
+      //Arrange
+      City departureCity = new City("Portland");
+      City arrivalCity = new City("Atlanta");
+      departureCity.Save();
+      arrivalCity.Save();
+
+      Flight testFlight = new Flight("United 404", "Delayed", departureTime, arrivalTime);
+      testFlight.Save();
+      Flight testFlight2 = new Flight("Virgin 480", "On-Time", departureTime, arrivalTime);
+      testFlight2.Save();
+      testFlight.AddCity(departureCity, arrivalCity, testFlight.GetId());
+      testFlight2.AddCity(departureCity, arrivalCity, testFlight2.GetId());
+
+      //Act
+
+
+      List<Flight> departureResult = departureCity.GetDepartures();
+      List<Flight> testList = new List<Flight>{testFlight, testFlight2};
+      List<Flight> arrivalResult = arrivalCity.GetArrivals();
+
+
+      //Assert
+      Assert.Equal(testList, departureResult);
+      Assert.Equal(testList, arrivalResult);
     }
   }
 }

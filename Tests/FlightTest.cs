@@ -8,6 +8,9 @@ namespace AirlinePlanner
 {
   public class FlightTest : IDisposable
   {
+    private DateTime? departureTime = new DateTime(2016, 7, 18, 6, 0, 0);
+    private DateTime? arrivalTime = new DateTime(2016, 7, 18, 10, 0, 0);
+
     public FlightTest()
     {
       DBConfiguration.ConnectionString = "Data Source=(localdb)\\mssqllocaldb;Initial Catalog=airline_planner_test;Integrated Security=SSPI;";
@@ -16,6 +19,7 @@ namespace AirlinePlanner
     public void Dispose()
     {
       Flight.DeleteAll();
+      City.DeleteAll();
     }
 
     [Fact]
@@ -32,8 +36,8 @@ namespace AirlinePlanner
     public void Test_Equal_ReturnsTrueForSameName()
     {
       //Arrange, Act
-      Flight firstFlight = new Flight("United 404", "Delayed");
-      Flight secondFlight = new Flight("United 404", "Delayed");
+      Flight firstFlight = new Flight("United 404", "Delayed", departureTime, arrivalTime);
+      Flight secondFlight = new Flight("United 404", "Delayed", departureTime, arrivalTime);
 
       //Assert
       Assert.Equal(firstFlight, secondFlight);
@@ -43,13 +47,12 @@ namespace AirlinePlanner
     public void Test_Save_SavesFlightToDatabase()
     {
       //Arrange
-      Flight testFlight = new Flight("United 404", "Delayed");
+      Flight testFlight = new Flight("United 404", "Delayed", departureTime, arrivalTime);
       testFlight.Save();
 
       //Act
       List<Flight> result = Flight.GetAll();
       List<Flight> testList = new List<Flight>{testFlight};
-
       //Assert
       Assert.Equal(testList, result);
     }
@@ -58,7 +61,7 @@ namespace AirlinePlanner
     public void Test_Save_AssignsIdToFlightObject()
     {
       //Arrange
-      Flight testFlight = new Flight("United 404", "Delayed");
+      Flight testFlight = new Flight("United 404", "Delayed", departureTime, arrivalTime);
       testFlight.Save();
 
       //Act
@@ -66,7 +69,6 @@ namespace AirlinePlanner
 
       int result = savedFlight.GetId();
       int testId = testFlight.GetId();
-
       //Assert
       Assert.Equal(testId, result);
     }
@@ -75,7 +77,7 @@ namespace AirlinePlanner
     public void Test_Find_FindsFlightInDatabase()
     {
       //Arrange
-      Flight testFlight = new Flight("United 404", "Delayed");
+      Flight testFlight = new Flight("United 404", "Delayed", departureTime, arrivalTime);
       testFlight.Save();
 
       //Act
@@ -90,11 +92,11 @@ namespace AirlinePlanner
     {
       //Arrange
       string name1 = "United 404";
-      Flight testFlight1 = new Flight(name1, "Delayed");
+      Flight testFlight1 = new Flight(name1, "Delayed", departureTime, arrivalTime);
       testFlight1.Save();
 
       string name2 = "Virgin 501";
-      Flight testFlight2 = new Flight(name2, "Delayed");
+      Flight testFlight2 = new Flight(name2, "Delayed", departureTime, arrivalTime);
       testFlight2.Save();
 
       //Act
@@ -107,18 +109,30 @@ namespace AirlinePlanner
 
     }
 
-    //Will add city and arrival time to database
-    // [Fact]
-    // public void Test_AddArrival_AddsCityAndArrivalTimeToDatabase()
-    // {
-    //   //Arrange
-    //   Flight testFlight = new Flight("United 404", "Delayed");
-    //   testFlight.Save();
-    //
-    //   DateTime? newArrivalTime = new DateTime(2016, 7, 18, 8, 0, 0);
-    //   City newArrivalCity = new City("Portland");
-    //
-    //
-    // }
+    [Fact]
+    public void Test_AddCities_AddsCitiesToFlight()
+    {
+      //Arrange
+      Flight testFlight = new Flight("United 404", "Delayed", departureTime, arrivalTime);
+      testFlight.Save();
+
+     City departureCity = new City("Portland");
+     departureCity.Save();
+
+     City arrivalCity = new City("Atlanta");
+     arrivalCity.Save();
+
+     //Act
+     testFlight.AddCity(departureCity, arrivalCity, testFlight.GetId());
+
+     List<City> result = testFlight.GetCities();
+     List<City> cityList = new List<City>{departureCity, arrivalCity};
+     //Assert
+     Assert.Equal(cityList, result);
+    }
+
+
+
+
   }
 }
